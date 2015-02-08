@@ -3,6 +3,7 @@ import json
 import requests
 import websocket
 
+from .events import event_mapping, SlackEvent
 from .exceptions import SlackConnectionError
 
 class SlackRTMClient(object):
@@ -39,15 +40,26 @@ class SlackRTMClient(object):
         """Set the timeout for the websocket"""
         self.websocket.sock.settimeout(timeout)
 
-    def read(self, timeout=0):
+    def read(self):
         """Read a message from the websocket"""
         try:
             while True:
-                event = self.websocket.recv()
-                yield self.process_event(event)
+                data = self.websocket.recv()
+                event = self.process_event(data)
+                yield event
         except Exception as e:
+            # TODO: Raise more specific exceptions when socket is disconnected
+            #       or there are other issues with reading messages
             raise StopIteration(str(e))
 
-    def process_event(self, event):
+    @staticmethod
+    def process_event(event):
         """Returns an Event object"""
-        return json.loads(event)
+
+        event = json.loads(event)
+        event_type = event['type']
+
+        if event_type in event_mapping:
+            return event_mapping[event_type](event)
+        else:
+            return SlackEvent(event)
