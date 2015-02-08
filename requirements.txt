@@ -1,3 +1,2 @@
-backports.ssl-match-hostname==3.4.0.2
-six==1.9.0
+requests==2.5.1
 websocket-client==0.23.0
