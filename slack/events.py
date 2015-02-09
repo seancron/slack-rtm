@@ -8,7 +8,9 @@ class SlackEvent(object):
         super(SlackEvent, self).__init__()
 
         self._raw = data
-        self.type = data['type']
+        # XXX: Confirmation messages do not contain a type
+        # https://api.slack.com/rtm#sending_messages
+        self.type = data.get('type')
 
 
 class Hello(SlackEvent):

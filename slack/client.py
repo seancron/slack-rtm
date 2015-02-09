@@ -12,6 +12,7 @@ class SlackRTMClient(object):
     def __init__(self, token):
         self.token = token
         self.websocket = None
+        self.message_id = 1
 
     def _start(self):
         response = requests.get(self.BASE_API_URL.format(method='rtm.start'),
@@ -47,9 +48,7 @@ class SlackRTMClient(object):
                 data = self.websocket.recv()
                 event = self.process_event(data)
                 yield event
-        except Exception as e:
-            # TODO: Raise more specific exceptions when socket is disconnected
-            #       or there are other issues with reading messages
+        except (websocket.SSLError, websocket.WebSocketTimeoutException) as e:
             raise StopIteration(str(e))
 
     @staticmethod
@@ -63,3 +62,17 @@ class SlackRTMClient(object):
             return event_mapping[event_type](event)
         else:
             return SlackEvent(event)
+
+    def send_message(self, text, channel_id, wait=True):
+        """Sends a message to a channel, group, or user"""
+
+        #TODO: Implement message receipt confirmation
+        self.message_id += 1
+        data = {
+            "id": self.message_id,
+            "type": "message",
+            "channel": channel_id,
+            "text": text
+        }
+
+        self.websocket.send(json.dumps(data))
