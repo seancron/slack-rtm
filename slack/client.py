@@ -56,7 +56,7 @@ class SlackRTMClient(object):
         """Returns an Event object"""
 
         event = json.loads(event)
-        event_type = event['type']
+        event_type = event.get('type')
 
         if event_type in event_mapping:
             return event_mapping[event_type](event)
